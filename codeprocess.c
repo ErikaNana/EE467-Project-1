@@ -17,6 +17,11 @@ struct code *prev;
 struct code *next;
 }Code;
 
+int regA, regB;
+int memory[255];
+char bufferA[33];
+char bufferB[33];
+
 main()
 {
 FILE *fp;
@@ -94,9 +99,16 @@ printf(" \n\n Total %d lines of code readed\n \n",size);
 ppt=head;
 while(ppt!=NULL){
     printf("       %s     %s     %s \n\n\n",ppt->label,ppt->inst,ppt->tar);
-     newline=ppt;
-     ppt=newline->next;
+    
+    if(strcmp(ppt->inst,"LDA")==0) regA = strtol(ppt->tar,0,16); 
+    if(strcmp(ppt->inst,"LDIA")==0) regA = strtol(ppt->tar,0,10);
+    if(strcmp(ppt->inst,"LDB")==0) regB = strtol(ppt->tar,0,16); 
+    if(strcmp(ppt->inst,"LDIB")==0) regB = strtol(ppt->tar,0,10);
+    if(strcmp(ppt->inst,"STA")==0) memory[strtol(ppt->tar,0,16)] = regA;
+    if(strcmp(ppt->inst,"STB")==0) memory[strtol(ppt->tar,0,16)] = regB;
+
+    printf("Register A: %d\nRegister B: %d\n\n", regA, regB); 	 
+    newline=ppt;
+    ppt=newline->next;
     }
 }
-
-                                                                                     
