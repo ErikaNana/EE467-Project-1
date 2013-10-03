@@ -17,12 +17,13 @@ struct code *prev;
 struct code *next;
 }Code;
 
-int regA, regB;
-int memory[255];
+int regA, regB, PC = 0;
+int memory[256];
 char bufferA[33];
 char bufferB[33];
 char cmd[33];
 char add[33];
+
 main()
 {
 FILE *fp;
@@ -39,7 +40,10 @@ int comma=0;
 int jump_flag=0;
 char target_label[256];
 
-printf("Enter assemble code file name: ");
+printf("\n\n                               Welcome to EE 260 Computer Simulator\n\n\n"); 
+
+while(1) {
+printf("Enter assembly code file name: ");
 scanf("%s",filename);
 fp=fopen(filename,"r");
 if(fp==NULL){
@@ -96,35 +100,42 @@ fclose(fp);
 if(head==NULL)printf("Error read the target file\n");
 //return(head);
 
-printf(" \n\n %d lines of code loaded...\n \n",size);
+if(size>64) {
+	printf("Error: The file is larger than the code space\n\nExiting...\n\n");
+	exit(1);
+	}
 
-    printf("Hello,\n\n");
-    printf("Welcome to EE 260 Computer Simulator\n\n"); 
-    
+printf(" \n\n %d lines of code loaded...\n \n",size);
+	
+printf("                                ----- Options -----\n\n"); 
+printf("                                step: Step through program\n");      
+printf("                                display: Displays memory address\n"); 
+printf("                                help: Displays options\n");
+printf("                                exit: Exits the simulator\n\n"); 
+
 ppt=head;
+
 while(ppt!=NULL){
     
 	if(jump_flag > 0) {
 		jump_flag = 0;
+		PC=0;	
 		ppt=head;
 	
         	while(ppt!=NULL) {
 			if(strncmp(ppt->label,target_label,strlen(ppt->label))==0 && strlen(ppt->label) > 0) {
-				printf("     Program Counter: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
+				printf("                              Next Instruction: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
 				printf("\n");
 				break;
 				}
 			else {
 				newline=ppt;
 				ppt=newline->next;
+				PC++;	
 				}	
 			}
    		}
 
-    printf("What do you want to do?\n\n");
-    printf("----- Options -----\n\n"); 
-    printf("step: Step through program\n");      
-    printf("display: Displays memory address\n\n"); 
     printf("Enter command: ");    
     scanf("%s",cmd);
 		
@@ -134,56 +145,109 @@ while(ppt!=NULL){
 	printf("\n");
 	printf("The value stored in address %s is %d\n\n",add,memory[strtol(add,0,16)]);	
 	}    
-   
-    if(strcmp(cmd,"step")==0) { 
+    else if(strcmp(cmd,"help")==0) {
+ 	printf("\n\n");	
+	printf("                             ----- Options -----\n\n"); 
+    	printf("                             step: Step through program\n");      
+    	printf("                             display: Displays memory address\n"); 
+	printf("                             help: Displays options\n");
+    	printf("                             exit: Exits the simulator\n\n"); 
+   	} 
+    else if(strcmp(cmd,"exit")==0) exit(0);
+    else if(strcmp(cmd,"step")==0) { 
      
-    	if(ppt==NULL) break;	
-    	printf("\n     Current Instruction: %s %s %s\n",ppt->label,ppt->inst,ppt->tar);
+    	printf("\n                             Current Instruction: %s %s %s\n",ppt->label,ppt->inst,ppt->tar);
     
     	if(strcmp(ppt->inst,"LDA")==0) regA = strtol(ppt->tar,0,16); 
-    	if(strcmp(ppt->inst,"LDIA")==0) regA = strtol(ppt->tar,0,10);
-    	if(strcmp(ppt->inst,"LDB")==0) regB = strtol(ppt->tar,0,16); 
-    	if(strcmp(ppt->inst,"LDIB")==0) regB = strtol(ppt->tar,0,10);
-    	if(strcmp(ppt->inst,"STA")==0) memory[strtol(ppt->tar,0,16)] = regA;
-    	if(strcmp(ppt->inst,"STB")==0) memory[strtol(ppt->tar,0,16)] = regB;
-    	if(strcmp(ppt->inst,"TAB")==0) regB = regA;
-    	if(strcmp(ppt->inst,"TBA")==0) regA = regB;
-    	if(strcmp(ppt->inst,"ADDA")==0) regA = regA + memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"ADDIA")==0) regA = regA + strtol(ppt->tar,0,10); 
-    	if(strcmp(ppt->inst,"ADDB")==0) regB = regB + memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"ADDIB")==0) regB = regB + strtol(ppt->tar,0,10); 
-    	if(strcmp(ppt->inst,"SUBA")==0) regA = regA - memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"SUBIA")==0) regA = regA - strtol(ppt->tar,0,10); 
-    	if(strcmp(ppt->inst,"SUBB")==0) regB = regB - memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"SUBIB")==0) regB = regB - strtol(ppt->tar,0,10); 
-    	if(strcmp(ppt->inst,"ANDA")==0) regA = regA & memory[strtol(ppt->tar,0,16)]; 
-    	if(strcmp(ppt->inst,"ANDIA")==0) regA = regA & strtol(ppt->tar,0,16);
-    	if(strcmp(ppt->inst,"ANDB")==0) regB = regB & memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"ANDIB")==0) regB = regB & strtol(ppt->tar,0,16);
-    	if(strcmp(ppt->inst,"ORA")==0) regA = regA | memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"ORIA")==0) regA = regA | strtol(ppt->tar,0,16);
-    	if(strcmp(ppt->inst,"ORB")==0) regB = regB | memory[strtol(ppt->tar,0,16)];
-    	if(strcmp(ppt->inst,"ORIB")==0) regB = regB | strtol(ppt->tar,0,16);  	 
-    	if(strcmp(ppt->label,"JMP")==0) jump_flag = 1; 
-    	if(strcmp(ppt->inst,"JBZ")==0) {
+    	else if(strcmp(ppt->inst,"LDIA")==0) regA = strtol(ppt->tar,0,10);
+    	else if(strcmp(ppt->inst,"LDB")==0) regB = strtol(ppt->tar,0,16); 
+    	else if(strcmp(ppt->inst,"LDIB")==0) regB = strtol(ppt->tar,0,10);
+    	else if(strcmp(ppt->inst,"STA")==0) memory[strtol(ppt->tar,0,16)] = regA;
+    	else if(strcmp(ppt->inst,"STB")==0) memory[strtol(ppt->tar,0,16)] = regB;
+    	else if(strcmp(ppt->inst,"TAB")==0) regB = regA;
+    	else if(strcmp(ppt->inst,"TBA")==0) regA = regB;
+    	else if(strcmp(ppt->inst,"ADDA")==0) regA = regA + memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"ADDIA")==0) regA = regA + strtol(ppt->tar,0,10); 
+    	else if(strcmp(ppt->inst,"ADDB")==0) regB = regB + memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"ADDIB")==0) regB = regB + strtol(ppt->tar,0,10); 
+    	else if(strcmp(ppt->inst,"SUBA")==0) regA = regA - memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"SUBIA")==0) regA = regA - strtol(ppt->tar,0,10); 
+    	else if(strcmp(ppt->inst,"SUBB")==0) regB = regB - memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"SUBIB")==0) regB = regB - strtol(ppt->tar,0,10); 
+    	else if(strcmp(ppt->inst,"ANDA")==0) regA = regA & memory[strtol(ppt->tar,0,16)]; 
+    	else if(strcmp(ppt->inst,"ANDIA")==0) regA = regA & strtol(ppt->tar,0,16);
+    	else if(strcmp(ppt->inst,"ANDB")==0) regB = regB & memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"ANDIB")==0) regB = regB & strtol(ppt->tar,0,16);
+    	else if(strcmp(ppt->inst,"ORA")==0) regA = regA | memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"ORIA")==0) regA = regA | strtol(ppt->tar,0,16);
+    	else if(strcmp(ppt->inst,"ORB")==0) regB = regB | memory[strtol(ppt->tar,0,16)];
+    	else if(strcmp(ppt->inst,"ORIB")==0) regB = regB | strtol(ppt->tar,0,16);  	 
+    	else if(strcmp(ppt->label,"JMP")==0) jump_flag = 1; 
+    	else if(strcmp(ppt->inst,"JBZ")==0) {
     		if(regB==0) jump_flag = 2;
    		} 
-    	if(strcmp(ppt->inst,"JBNZ")==0) {
+    	else if(strcmp(ppt->inst,"JBNZ")==0) {
 		if(regB!=0) jump_flag = 2;
 		}
-
+	else printf("Error: %s is not a valid instruction\n\n", ppt->inst);
+		
 	if(jump_flag==1) strcpy(target_label,ppt->inst);
 	if(jump_flag==2) strcpy(target_label,ppt->tar);					
-    
-    	printf("     Register A: %d\n", regA);
-    	printf("     Register B: %d\n", regB); 	 
-    
+  	
+	printf("\n"); 
+	printf("                             A:  %d\n", regA);
+    	printf("                             B:  %d\n", regB); 	 
+   	printf("                             PC: %d\n", PC);	
+	printf("\n"); 
 	if(jump_flag == 0) { 
    		newline=ppt;
     		ppt=newline->next;
-    		if(ppt!=NULL) printf("     Program Counter: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
-		printf("\n");
+    		if(ppt!=NULL) {
+			printf("                             Next instruction: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
+			PC++;	
+			printf("\n");
+			}
 		}	  
-	}	
+	}
+   else printf("Error: %s is not a valid command\n\n", cmd);	
+}
+    printf("End of File\n\n"); 
+    printf("                             ----- Options -----\n\n"); 
+    printf("                             load: Load a new assembly code file\n");      
+    printf("                             display: Displays memory address\n"); 
+    printf("                             help: Displays options\n");
+    printf("                             exit: Exits the simulator\n\n"); 
+    
+    while(1) {
+    printf("Enter command: ");    
+    scanf("%s",cmd);
+   
+    if(strcmp(cmd,"load")==0) {
+		regA = 0;
+		regB = 0;
+		PC = 0;	
+		for(i=0;i<256;i++) memory[i] = 0;	
+		i = 0;
+		j = 0;
+		r = 0;	
+		size = 0;	
+		break;
+ 		}
+   else if(strcmp(cmd,"help")==0) {
+    	printf("                             ----- Options -----\n\n"); 
+    	printf("                             load: Load a new assembly code file\n");      
+    	printf("                             display: Displays memory address\n"); 
+    	printf("                             help: Displays options\n");
+    	printf("                             exit: Exits the simulator\n\n"); 
+  	}  
+   else if(strcmp(cmd,"display")==0) {
+	printf("Enter memory address in hexidecimal: ");	
+	scanf("%s",add);	
+	printf("\n");
+	printf("The value stored in address %s is %d\n\n",add,memory[strtol(add,0,16)]);	
+	}    
+    else if(strcmp(cmd,"exit")==0) exit(0);
+   else printf("Error: %s is not a valid command\n\n",cmd);
+   }
 }
 }
