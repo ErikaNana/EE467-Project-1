@@ -21,7 +21,8 @@ int regA, regB;
 int memory[255];
 char bufferA[33];
 char bufferB[33];
-
+char cmd[33];
+char add[33];
 main()
 {
 FILE *fp;
@@ -35,7 +36,8 @@ Code *newline;
 Code *ppt;
 char readline[256]="";
 int comma=0;
-
+int jump_flag=0;
+char target_label[256];
 
 printf("Enter assemble code file name: ");
 scanf("%s",filename);
@@ -94,21 +96,94 @@ fclose(fp);
 if(head==NULL)printf("Error read the target file\n");
 //return(head);
 
-printf(" \n\n Total %d lines of code readed\n \n",size);
+printf(" \n\n %d lines of code loaded...\n \n",size);
 
+    printf("Hello,\n\n");
+    printf("Welcome to EE 260 Computer Simulator\n\n"); 
+    
 ppt=head;
 while(ppt!=NULL){
-    printf("       %s     %s     %s \n\n\n",ppt->label,ppt->inst,ppt->tar);
     
-    if(strcmp(ppt->inst,"LDA")==0) regA = strtol(ppt->tar,0,16); 
-    if(strcmp(ppt->inst,"LDIA")==0) regA = strtol(ppt->tar,0,10);
-    if(strcmp(ppt->inst,"LDB")==0) regB = strtol(ppt->tar,0,16); 
-    if(strcmp(ppt->inst,"LDIB")==0) regB = strtol(ppt->tar,0,10);
-    if(strcmp(ppt->inst,"STA")==0) memory[strtol(ppt->tar,0,16)] = regA;
-    if(strcmp(ppt->inst,"STB")==0) memory[strtol(ppt->tar,0,16)] = regB;
+	if(jump_flag > 0) {
+		jump_flag = 0;
+		ppt=head;
+	
+        	while(ppt!=NULL) {
+			if(strncmp(ppt->label,target_label,strlen(ppt->label))==0 && strlen(ppt->label) > 0) {
+				printf("     Program Counter: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
+				printf("\n");
+				break;
+				}
+			else {
+				newline=ppt;
+				ppt=newline->next;
+				}	
+			}
+   		}
 
-    printf("Register A: %d\nRegister B: %d\n\n", regA, regB); 	 
-    newline=ppt;
-    ppt=newline->next;
-    }
+    printf("What do you want to do?\n\n");
+    printf("----- Options -----\n\n"); 
+    printf("step: Step through program\n");      
+    printf("display: Displays memory address\n\n"); 
+    printf("Enter command: ");    
+    scanf("%s",cmd);
+		
+    if(strcmp(cmd,"display")==0) {
+	printf("Enter memory address in hexidecimal: ");	
+	scanf("%s",add);	
+	printf("\n");
+	printf("The value stored in address %s is %d\n\n",add,memory[strtol(add,0,16)]);	
+	}    
+   
+    if(strcmp(cmd,"step")==0) { 
+     
+    	if(ppt==NULL) break;	
+    	printf("\n     Current Instruction: %s %s %s\n",ppt->label,ppt->inst,ppt->tar);
+    
+    	if(strcmp(ppt->inst,"LDA")==0) regA = strtol(ppt->tar,0,16); 
+    	if(strcmp(ppt->inst,"LDIA")==0) regA = strtol(ppt->tar,0,10);
+    	if(strcmp(ppt->inst,"LDB")==0) regB = strtol(ppt->tar,0,16); 
+    	if(strcmp(ppt->inst,"LDIB")==0) regB = strtol(ppt->tar,0,10);
+    	if(strcmp(ppt->inst,"STA")==0) memory[strtol(ppt->tar,0,16)] = regA;
+    	if(strcmp(ppt->inst,"STB")==0) memory[strtol(ppt->tar,0,16)] = regB;
+    	if(strcmp(ppt->inst,"TAB")==0) regB = regA;
+    	if(strcmp(ppt->inst,"TBA")==0) regA = regB;
+    	if(strcmp(ppt->inst,"ADDA")==0) regA = regA + memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"ADDIA")==0) regA = regA + strtol(ppt->tar,0,10); 
+    	if(strcmp(ppt->inst,"ADDB")==0) regB = regB + memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"ADDIB")==0) regB = regB + strtol(ppt->tar,0,10); 
+    	if(strcmp(ppt->inst,"SUBA")==0) regA = regA - memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"SUBIA")==0) regA = regA - strtol(ppt->tar,0,10); 
+    	if(strcmp(ppt->inst,"SUBB")==0) regB = regB - memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"SUBIB")==0) regB = regB - strtol(ppt->tar,0,10); 
+    	if(strcmp(ppt->inst,"ANDA")==0) regA = regA & memory[strtol(ppt->tar,0,16)]; 
+    	if(strcmp(ppt->inst,"ANDIA")==0) regA = regA & strtol(ppt->tar,0,16);
+    	if(strcmp(ppt->inst,"ANDB")==0) regB = regB & memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"ANDIB")==0) regB = regB & strtol(ppt->tar,0,16);
+    	if(strcmp(ppt->inst,"ORA")==0) regA = regA | memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"ORIA")==0) regA = regA | strtol(ppt->tar,0,16);
+    	if(strcmp(ppt->inst,"ORB")==0) regB = regB | memory[strtol(ppt->tar,0,16)];
+    	if(strcmp(ppt->inst,"ORIB")==0) regB = regB | strtol(ppt->tar,0,16);  	 
+    	if(strcmp(ppt->label,"JMP")==0) jump_flag = 1; 
+    	if(strcmp(ppt->inst,"JBZ")==0) {
+    		if(regB==0) jump_flag = 2;
+   		} 
+    	if(strcmp(ppt->inst,"JBNZ")==0) {
+		if(regB!=0) jump_flag = 2;
+		}
+
+	if(jump_flag==1) strcpy(target_label,ppt->inst);
+	if(jump_flag==2) strcpy(target_label,ppt->tar);					
+    
+    	printf("     Register A: %d\n", regA);
+    	printf("     Register B: %d\n", regB); 	 
+    
+	if(jump_flag == 0) { 
+   		newline=ppt;
+    		ppt=newline->next;
+    		if(ppt!=NULL) printf("     Program Counter: %s %s %s \n",ppt->label,ppt->inst,ppt->tar);
+		printf("\n");
+		}	  
+	}	
+}
 }
